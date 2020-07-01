@@ -7,32 +7,32 @@
 param(
     [Parameter(ParameterSetName = 'Build')]
     [ValidateSet('Debug', 'Release')]
-    [string]
-    $Configuration = 'Debug',
+    [string] $Configuration = 'Debug',
+
+    [Parameter(ParameterSetName = 'Build')]
+    [ValidateSet('net5.0', 'netstandard2.0')]
+    [string] $Framework = 'netstandard2.0',
 
     [Parameter(ParameterSetName = 'Test')]
-    [switch]
-    $Build,
+    [switch] $Build,
 
     [Parameter(ParameterSetName = 'Test')]
-    [switch]
-    $Test
+    [switch] $Test
 )
 
 $ErrorActionPreference = 'Stop'
 
-$script:ModuleName = 'Microsoft.PowerShell.UnixCompleters'
-$script:OutDir = "$PSScriptRoot/out"
-$script:OutModuleDir = "$script:OutDir/$script:ModuleName"
-$script:SrcDir = "$PSScriptRoot/$script:ModuleName"
-$script:Framework = 'netstandard2.0'
-$script:ZshCompleterScriptLocation = "$script:OutModuleDir/zcomplete.sh"
+$ModuleName = 'Microsoft.PowerShell.UnixCompleters'
+$OutDir = "$PSScriptRoot/out"
+$OutModuleDir = "$OutDir/$ModuleName"
+$SrcDir = "$PSScriptRoot/$ModuleName"
+$ZshCompleterScriptLocation = "$OutModuleDir/zcomplete.sh"
 
 $script:Artifacts = @{
-    "${script:ModuleName}.psd1" = "${script:ModuleName}.psd1"
+    "$ModuleName.psd1" = "$ModuleName.psd1"
     "OnStart.ps1" = "OnStart.ps1"
-    "${script:ModuleName}/bin/$Configuration/${script:Framework}/$script:ModuleName.dll" = "$script:ModuleName.dll"
-    "${script:ModuleName}/bin/$Configuration/${script:Framework}/$script:ModuleName.pdb" = "$script:ModuleName.pdb"
+    "$ModuleName/bin/$Configuration/$Framework/$ModuleName.dll" = "$ModuleName.dll"
+    "$ModuleName/bin/$Configuration/$Framework/$ModuleName.pdb" = "$ModuleName.pdb"
     "../../LICENSE" = "LICENSE.txt"
 }
 
@@ -43,7 +43,7 @@ function Exec([scriptblock]$sb, [switch]$IgnoreExitcode)
     # point to the obsolete value
     if ($LASTEXITCODE -ne 0 -and -not $IgnoreExitcode)
     {
-	throw "Execution of {$sb} failed with exit code $LASTEXITCODE"
+	    throw "Execution of {$sb} failed with exit code $LASTEXITCODE"
     }
 }
 
@@ -58,33 +58,33 @@ if ($PSCmdlet.ParameterSetName -eq 'Build' -or $Build)
         throw 'Unable to find dotnet executable'
     }
 
-    foreach ($path in $script:OutDir,"${script:SrcDir}/bin","${script:SrcDir}/obj")
+    foreach ($path in $OutDir,"${script:SrcDir}/bin","${script:SrcDir}/obj")
     {
-	if (Test-Path -Path $path)
-	{
-	    Remove-Item -Force -Recurse -Path $path -ErrorAction Stop
-	}
+        if (Test-Path -Path $path)
+        {
+            Remove-Item -Force -Recurse -Path $path -ErrorAction Stop
+        }
     }
 
-    Push-Location $script:SrcDir
     try
     {
-        Exec { dotnet build }
+        Push-Location $SrcDir
+        Exec { dotnet build -f $Framework -c $Configuration }
     }
     finally
     {
         Pop-Location
     }
 
-    New-Item -ItemType Directory -Path $script:OutModuleDir -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Path $OutModuleDir -ErrorAction SilentlyContinue
 
     foreach ($artifactEntry in $script:Artifacts.GetEnumerator())
     {
-        Copy-Item -Path (Join-Path $PSScriptRoot $artifactEntry.Key) -Destination (Join-Path $script:OutModuleDir $artifactEntry.Value) -ErrorAction Stop
+        Copy-Item -Path (Join-Path $PSScriptRoot $artifactEntry.Key) -Destination (Join-Path $OutModuleDir $artifactEntry.Value) -ErrorAction Stop
     }
 
     # We need the zsh completer script to drive zsh completions
-    Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Valodim/zsh-capture-completion/master/capture.zsh' -OutFile $script:ZshCompleterScriptLocation
+    Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Valodim/zsh-capture-completion/master/capture.zsh' -OutFile $ZshCompleterScriptLocation
 }
 
 if ($Test)

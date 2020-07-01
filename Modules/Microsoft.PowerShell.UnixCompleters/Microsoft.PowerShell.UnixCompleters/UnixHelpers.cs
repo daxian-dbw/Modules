@@ -10,7 +10,11 @@ namespace Microsoft.PowerShell.UnixCompleters
 {
     internal static class UnixHelpers
     {
-        private readonly static IReadOnlyList<string> s_nativeUtilDirs = new []
+        internal const string PredictorId = "d8edf07c-a15f-46e1-add1-b0a7a619582d";
+        internal const string PredictorName = "Unix Utility Predictor";
+        internal const string PredictorDescription = "Provide suggestions for the arguments of Unix utility commands.";
+
+        private readonly static string[] s_nativeUtilDirs = new[]
         {
             "/usr/local/sbin",
             "/usr/local/bin",
@@ -26,12 +30,12 @@ namespace Microsoft.PowerShell.UnixCompleters
             { "bash", ShellType.Bash },
         };
 
-        private readonly static Lazy<IReadOnlyList<string>> s_nativeUtilNamesLazy =
-            new Lazy<IReadOnlyList<string>>(GetNativeUtilNames);
+        private readonly static Lazy<HashSet<string>> s_nativeUtilNamesLazy =
+            new Lazy<HashSet<string>>(GetNativeUtilNames);
 
         internal static IReadOnlyList<string> NativeUtilDirs => s_nativeUtilDirs;
 
-        internal static IReadOnlyList<string> NativeUtilNames => s_nativeUtilNamesLazy.Value;
+        internal static HashSet<string> NativeUtilNames => s_nativeUtilNamesLazy.Value;
 
         internal static bool TryFindShell(string shellName, out string shellPath, out ShellType shellType)
         {
@@ -95,7 +99,7 @@ namespace Microsoft.PowerShell.UnixCompleters
         }
 
 
-        private static IReadOnlyList<string> GetNativeUtilNames()
+        private static HashSet<string> GetNativeUtilNames()
         {
             var commandSet = new HashSet<string>(StringComparer.Ordinal);
             foreach (string utilDir in s_nativeUtilDirs)
@@ -111,8 +115,8 @@ namespace Microsoft.PowerShell.UnixCompleters
                     }
                 }
             }
-            var commandList = new List<string>(commandSet);
-            return commandList;
+
+            return commandSet;
         }
 
         private static bool IsExecutable(string path)

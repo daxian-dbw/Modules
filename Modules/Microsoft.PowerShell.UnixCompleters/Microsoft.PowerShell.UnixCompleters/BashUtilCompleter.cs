@@ -16,10 +16,9 @@ namespace Microsoft.PowerShell.UnixCompleters
 {
     public class BashUtilCompleter : IUnixUtilCompleter
     {
-
         private static readonly string s_resolveCompleterCommandTemplate = string.Join("; ", new []
         {
-            "-lic \". /usr/share/bash-completion 2>/dev/null",
+            "-lic \". /usr/share/bash-completion/bash_completion 2>/dev/null",
             "__load_completion {0} 2>/dev/null",
             "complete -p {0} 2>/dev/null | sed -E 's/^complete.*-F ([^ ]+).*$/\\1/'\""
         });
